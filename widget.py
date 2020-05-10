@@ -99,8 +99,6 @@ class CustomNetwork(InLoopPollText):
 
     def poll(self):
         statuses: List[str] = []
-        import pdb
-        pdb.set_trace()
         try:
             # pylint: disable=I1101
             ifaces = netifaces.interfaces()

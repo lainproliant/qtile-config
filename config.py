@@ -159,7 +159,8 @@ def widget_defaults(font_info, base16: Base16) -> dict:
         font=font_info['font'],
         fontsize=font_info['size'],
         padding=1,
-        border_color=base16.foreground
+        background=base16(0x01),
+        foreground=base16(0x05)
     )
 
 # -------------------------------------------------------------------
@@ -190,24 +191,26 @@ def battery_widget() -> widget.battery.Battery:
 
 # -------------------------------------------------------------------
 @provide
-def group_box(base16: Base16) -> widget.GroupBox:
-    return widget.GroupBox(highlight_method='block',
-                           this_current_screen_border=base16.selection_background,
-                           urgent_border=base16.variable,
-                           active=base16.dark_foreground,
-                           other_screen_border=base16.light_background,
-                           other_current_screen_border=base16.constant,
-                           background=base16.background)
+def group_box_factory(base16: Base16) -> Callable[[], widget.GroupBox]:
+    def factory():
+        return widget.GroupBox(highlight_method='block',
+                               background=base16(0x01),
+                               inactive=base16(0x03),
+                               this_current_screen_border=base16(0x08),
+                               this_screen_border=base16(0x0E),
+                               other_screen_current_border=base16(0x01),
+                               other_screen_border=base16(0x01))
+    return factory
 
 
 # -------------------------------------------------------------------
 @config
-def screens(num_screens, widget_defaults, battery_widget, group_box, sep_factory):
+def screens(num_screens, widget_defaults, battery_widget, group_box_factory, sep_factory):
     return [
         Screen(
             top=bar.Bar(
                 [
-                    group_box,
+                    group_box_factory(),
                     sep_factory(),
                     widget.CurrentLayout(),
                     sep_factory(),

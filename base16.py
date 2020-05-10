@@ -15,6 +15,8 @@ import re
 from pathlib import Path
 from typing import List
 
+from ansilog import bg
+
 
 # --------------------------------------------------------------------
 class Base16:
@@ -43,66 +45,27 @@ class Base16:
             raise ValueError('Value must be between 0 and 15.')
         return self.base16colors[n]
 
-    @property
-    def background(self):
-        return self.get(0x00)
+    def __call__(self, n):
+        return self.get(n)
 
-    @property
-    def lighter_background(self):
-        return self.get(0x01)
+    def print_sample(self, index, name):
+        color = self.base16colors[index]
+        print('[', bg.rgb(color)(' ' * 10), ']', '0%X' % index, name)
 
-    @property
-    def selection_background(self):
-        return self.get(0x02)
-
-    @property
-    def comment(self):
-        return self.get(0x03)
-
-    @property
-    def dark_foreground(self):
-        return self.get(0x04)
-
-    @property
-    def foreground(self):
-        return self.get(0x05)
-
-    @property
-    def light_foreground(self):
-        return self.get(0x06)
-
-    @property
-    def light_background(self):
-        return self.get(0x07)
-
-    @property
-    def variable(self):
-        return self.get(0x08)
-
-    @property
-    def constant(self):
-        return self.get(0x09)
-
-    @property
-    def type(self):
-        return self.get(0x0A)
-
-    @property
-    def string(self):
-        return self.get(0x0B)
-
-    @property
-    def escape(self):
-        return self.get(0x0C)
-
-    @property
-    def function(self):
-        return self.get(0x0D)
-
-    @property
-    def keyword(self):
-        return self.get(0x0E)
-
-    @property
-    def deprecated(self):
-        return self.get(0x0F)
+    def print_all_samples(self):
+        self.print_sample(0x00, "Default Background")
+        self.print_sample(0x01, "Lighter Background (Used for status bars)")
+        self.print_sample(0x02, "Selection Background")
+        self.print_sample(0x03, "Comments, Invisibles, Line Highlighting")
+        self.print_sample(0x04, "Dark Foreground (Used for status bars)")
+        self.print_sample(0x05, "Default Foreground, Caret, Delimiters, Operators")
+        self.print_sample(0x06, "Light Foreground (Not often used)")
+        self.print_sample(0x07, "Light Background (Not often used)")
+        self.print_sample(0x08, "Variables, XML Tags, Markup Link Text, Markup Lists, Diff Deleted")
+        self.print_sample(0x09, "Integers, Boolean, Constants, XML Attributes, Markup Link Url")
+        self.print_sample(0x0A, "Classes, Markup Bold, Search Text Background")
+        self.print_sample(0x0B, "Strings, Inherited Class, Markup Code, Diff Inserted")
+        self.print_sample(0x0C, "Support, Regular Expressions, Escape Characters, Markup Quotes")
+        self.print_sample(0x0D, "Functions, Methods, Attribute IDs, Headings")
+        self.print_sample(0x0E, "Keywords, Storage, Selector, Markup Italic, Diff Changed")
+        self.print_sample(0x0F, "Deprecated, Open/Closing Embedded Language Tags, e.g. `<?php ?>`")

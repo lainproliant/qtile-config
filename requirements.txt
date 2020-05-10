@@ -1,2 +1,3 @@
 xeno>=4.3.0
 iwlib
+colored
