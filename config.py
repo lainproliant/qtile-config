@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------
-# module.py
+# config.py
 #
 # Author: Lain Musgrove (lain.proliant@gmail.com)
 # Date: Wednesday May 6, 2020
@@ -14,20 +14,46 @@ The functions below define values which are injected into the global namespace
 and consumed by Qtile after dependency resolution.
 """
 
+import json
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import Callable, List
 
 from libqtile import bar, hook, layout, widget
 from libqtile.config import Click, Drag, Group, Key, Screen
 from libqtile.lazy import lazy
 
-from framework import config, config_set, setup, inject
+from framework import config, config_set, inject, provide, setup
+from widget import CustomMemory, CustomNetwork
+from base16 import Base16
 
 
 # -------------------------------------------------------------------
 def util(cmd: str) -> str:
     return str(Path.home() / ".util" / cmd)
+
+
+# -------------------------------------------------------------------
+@provide
+def num_screens() -> int:
+    return int(
+        subprocess.check_output(
+            'xrandr | grep " connected " | wc -l', shell=True
+        ).decode("utf-8")
+    )
+
+
+# -------------------------------------------------------------------
+@provide
+def font_info() -> dict:
+    with open(Path.home() / ".font/config.json", "r") as infile:
+        return json.load(infile)
+
+
+# -------------------------------------------------------------------
+@provide
+def base16() -> Base16:
+    return Base16.load_from_xdefaults()
 
 
 # -------------------------------------------------------------------
@@ -51,28 +77,32 @@ def keys(mod, groups) -> List[Key]:
         Key([mod], "k", lazy.layout.up()),
         Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
         Key([mod, "shift"], "k", lazy.layout.shuffle_up()),
-        # --> Window state commands.
-        Key([mod], "t", lazy.window.toggle_floating()),
-        Key([mod], "f", lazy.window.toggle_fullscreen()),
-        Key([mod, "shift"], "c", lazy.window.kill()),
-        # --> Layout navigation commands.
         Key([mod], "h", lazy.layout.previous()),
         Key([mod], "l", lazy.layout.next()),
+        Key([mod, "shift"], "h", lazy.layout.client_to_previous()),
+        Key([mod, "shift"], "l", lazy.layout.client_to_next()),
+        Key([mod], "backslash", lazy.layout.add()),
+        Key([mod, "shift"], "backslash", lazy.layout.delete()),
+        # --> Window state commands.
+        Key([mod], "f", lazy.window.toggle_fullscreen()),
+        Key([mod, "shift"], "f", lazy.window.toggle_floating()),
+        Key([mod, "shift"], "c", lazy.window.kill()),
+        # --> Layout navigation commands.
         Key([mod], "space", lazy.layout.rotate()),
         Key([mod, "shift"], "space", lazy.next_layout()),
-        Key([mod, "shift"], "t", lazy.layout.toggle_split()),
+        Key([mod], "t", lazy.layout.toggle_split()),
         # --> Spawn commands
-        Key([mod], "Return", lazy.spawncmd()),
+        Key([mod], "Return", lazy.spawn(util("program_menu"))),
         Key([mod, "shift"], "Return", lazy.spawn(util("terminal"))),
         # --> Process commands
         Key([mod], "q", lazy.restart()),
         Key([mod, "shift"], "q", lazy.shutdown()),
     ]
 
+    # mod1 + letter of group = switch to group
     for group in groups:
         keys.extend(
             [
-                # mod1 + letter of group = switch to group
                 Key([mod], group.name, lazy.group[group.name].toscreen()),
                 Key([mod, "shift"], group.name, lazy.window.togroup(group.name)),
             ]
@@ -106,8 +136,8 @@ def mouse(mod):
 @config
 def layouts():
     return [
-        layout.Max(),
-        layout.Stack(num_stacks=2),
+        layout.Max(name="[ ]"),
+        layout.Stack(num_stacks=1, name="[|]", border_width=4),
         # Try more layouts by unleashing below layouts.
         # layout.Bsp(),
         # layout.Columns(),
@@ -124,9 +154,13 @@ def layouts():
 
 # -------------------------------------------------------------------
 @config
-def widget_defaults() -> dict:
-    return {"font": "Iosevka Slab Regular", "fontsize": 16, "padding": 3}
-
+def widget_defaults(font_info, base16: Base16) -> dict:
+    return dict(
+        font=font_info['font'],
+        fontsize=font_info['size'],
+        padding=1,
+        border_color=base16.foreground
+    )
 
 # -------------------------------------------------------------------
 @config
@@ -135,25 +169,61 @@ def extension_defualts(widget_defaults):
 
 
 # -------------------------------------------------------------------
+@provide
+def sep_factory() -> Callable[[], widget.sep.Sep]:
+    def factory():
+        return widget.sep.Sep(padding=16)
+
+    return factory
+
+
+# -------------------------------------------------------------------
+@provide
+def battery_widget() -> widget.battery.Battery:
+    return widget.battery.Battery(
+        format="{char}{percent:2.0%} ",
+        charge_char="+",
+        discharge_char="-",
+        empty_char="XX",
+    )
+
+
+# -------------------------------------------------------------------
+@provide
+def group_box(base16: Base16) -> widget.GroupBox:
+    return widget.GroupBox(highlight_method='block',
+                           this_current_screen_border=base16.selection_background,
+                           urgent_border=base16.variable,
+                           active=base16.dark_foreground,
+                           other_screen_border=base16.light_background,
+                           other_current_screen_border=base16.constant,
+                           background=base16.background)
+
+
+# -------------------------------------------------------------------
 @config
-def screens():
+def screens(num_screens, widget_defaults, battery_widget, group_box, sep_factory):
     return [
         Screen(
             top=bar.Bar(
                 [
-                    widget.GroupBox(),
-                    widget.sep.Sep(),
+                    group_box,
+                    sep_factory(),
                     widget.CurrentLayout(),
-                    widget.sep.Sep(),
-                    widget.Prompt(),
+                    sep_factory(),
                     widget.WindowName(),
-                    widget.Systray(),
-                    widget.sep.Sep(),
-                    widget.Clock(format="%Y-%m-%d %a %H:%M:%S"),
+                    CustomNetwork(),
+                    sep_factory(),
+                    CustomMemory(),
+                    widget.cpu.CPU(format="@{load_percent:02.0f}% "),
+                    battery_widget,
+                    widget.Clock(format="%a %m/%d/%Y %H:%M:%S"),
                 ],
-                24,
+                size=26,
+                **widget_defaults
             ),
-        ),
+        )
+        for screen in range(num_screens)
     ]
 
 
