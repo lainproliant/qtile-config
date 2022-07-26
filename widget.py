@@ -17,8 +17,8 @@ import iwlib
 import netifaces
 import psutil
 from libqtile.log_utils import logger
+from libqtile.widget.base import ORIENTATION_HORIZONTAL, InLoopPollText
 from libqtile.widget.memory import Memory
-from libqtile.widget.base import InLoopPollText, ORIENTATION_HORIZONTAL
 
 
 # --------------------------------------------------------------------
@@ -94,7 +94,10 @@ class CustomNetwork(InLoopPollText):
         addresses = self.get_addresses(iface)
         if addresses:
             statuses.append(
-                self.eth_format.format(iface=iface, addresses=",".join(addresses),)
+                self.eth_format.format(
+                    iface=iface,
+                    addresses=",".join(addresses),
+                )
             )
 
     def poll(self):

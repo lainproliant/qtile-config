@@ -69,3 +69,7 @@ class Base16:
         self.print_sample(0x0D, "Functions, Methods, Attribute IDs, Headings")
         self.print_sample(0x0E, "Keywords, Storage, Selector, Markup Italic, Diff Changed")
         self.print_sample(0x0F, "Deprecated, Open/Closing Embedded Language Tags, e.g. `<?php ?>`")
+
+# --------------------------------------------------------------------
+if __name__ == '__main__':
+    Base16.load_from_xdefaults().print_all_samples()

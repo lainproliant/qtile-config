@@ -20,12 +20,12 @@ from pathlib import Path
 from typing import Callable, List
 
 from libqtile import bar, hook, layout, widget
-from libqtile.config import Click, Drag, Group, Key, Screen
+from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 
+from base16 import Base16
 from framework import config, config_set, inject, provide, setup
 from widget import CustomMemory, CustomNetwork
-from base16 import Base16
 
 
 # -------------------------------------------------------------------
@@ -65,7 +65,7 @@ def groups() -> List[Group]:
 # -------------------------------------------------------------------
 @config
 def mod() -> str:
-    return "mod1"
+    return "mod4"
 
 
 # -------------------------------------------------------------------
@@ -94,6 +94,7 @@ def keys(mod, groups) -> List[Key]:
         # --> Spawn commands
         Key([mod], "Return", lazy.spawn(util("program_menu"))),
         Key([mod, "shift"], "Return", lazy.spawn(util("terminal"))),
+        Key([mod, "shift"], "o", lazy.spawn(util("browser"))),
         # --> Process commands
         Key([mod], "q", lazy.restart()),
         Key([mod, "shift"], "q", lazy.shutdown()),
@@ -114,7 +115,7 @@ def keys(mod, groups) -> List[Key]:
 # -------------------------------------------------------------------
 @config
 def mouse(mod):
-    """ Drag floating layouts. """
+    """Drag floating layouts."""
     return [
         Drag(
             [mod],
@@ -134,10 +135,16 @@ def mouse(mod):
 
 # -------------------------------------------------------------------
 @config
-def layouts():
+def borders(base16: Base16):
+    return dict(border_focus=base16(0x05), border_normal=base16(0x00))
+
+
+# -------------------------------------------------------------------
+@config
+def layouts(borders):
     return [
         layout.Max(name="[ ]"),
-        layout.Stack(num_stacks=1, name="[|]", border_width=4),
+        layout.Stack(num_stacks=1, name="[|]", border_width=4, **borders),
         # Try more layouts by unleashing below layouts.
         # layout.Bsp(),
         # layout.Columns(),
@@ -156,12 +163,13 @@ def layouts():
 @config
 def widget_defaults(font_info, base16: Base16) -> dict:
     return dict(
-        font=font_info['font'],
-        fontsize=font_info['size'],
+        font=font_info["font"],
+        fontsize=font_info["size"],
         padding=1,
-        background=base16(0x01),
-        foreground=base16(0x05)
+        background=base16(0x00),
+        foreground=base16(0x05),
     )
+
 
 # -------------------------------------------------------------------
 @config
@@ -171,17 +179,17 @@ def extension_defualts(widget_defaults):
 
 # -------------------------------------------------------------------
 @provide
-def sep_factory() -> Callable[[], widget.sep.Sep]:
+def sep_factory() -> Callable[[], widget.Sep]:
     def factory():
-        return widget.sep.Sep(padding=16)
+        return widget.Sep(padding=16)
 
     return factory
 
 
 # -------------------------------------------------------------------
 @provide
-def battery_widget() -> widget.battery.Battery:
-    return widget.battery.Battery(
+def battery_widget() -> widget.Battery:
+    return widget.Battery(
         format="{char}{percent:2.0%} ",
         charge_char="+",
         discharge_char="-",
@@ -193,19 +201,24 @@ def battery_widget() -> widget.battery.Battery:
 @provide
 def group_box_factory(base16: Base16) -> Callable[[], widget.GroupBox]:
     def factory():
-        return widget.GroupBox(highlight_method='block',
-                               background=base16(0x01),
-                               inactive=base16(0x03),
-                               this_current_screen_border=base16(0x08),
-                               this_screen_border=base16(0x0E),
-                               other_screen_current_border=base16(0x01),
-                               other_screen_border=base16(0x01))
+        return widget.GroupBox(
+            highlight_method="block",
+            background=base16(0x00),
+            inactive=base16(0x03),
+            this_current_screen_border=base16(0x08),
+            this_screen_border=base16(0x0E),
+            other_screen_current_border=base16(0x01),
+            other_screen_border=base16(0x01),
+        )
+
     return factory
 
 
 # -------------------------------------------------------------------
 @config
-def screens(num_screens, widget_defaults, battery_widget, group_box_factory, sep_factory):
+def screens(
+    num_screens, widget_defaults, battery_widget, group_box_factory, sep_factory
+):
     return [
         Screen(
             top=bar.Bar(
@@ -218,7 +231,7 @@ def screens(num_screens, widget_defaults, battery_widget, group_box_factory, sep
                     CustomNetwork(),
                     sep_factory(),
                     CustomMemory(),
-                    widget.cpu.CPU(format="@{load_percent:02.0f}% "),
+                    widget.CPU(format="@{load_percent:02.0f}% "),
                     battery_widget,
                     widget.Clock(format="%a %m/%d/%Y %H:%M:%S"),
                 ],
@@ -235,19 +248,25 @@ def screens(num_screens, widget_defaults, battery_widget, group_box_factory, sep
 def floating_layout():
     return layout.Floating(
         float_rules=[
+            *layout.Floating.default_float_rules,
             # Run the utility of `xprop` to see the wm class and name of an X client.
-            {"wmclass": "Guake"},
-            {"wmclass": "Conky"},
-            {"wmclass": "confirm"},
-            {"wmclass": "dialog"},
-            {"wmclass": "download"},
-            {"wmclass": "error"},
-            {"wmclass": "file_progress"},
-            {"wmclass": "notification"},
-            {"wmclass": "splash"},
-            {"wmclass": "ssh-askpass"},  # ssh-askpass
-            {"wmclass": "toolbar"},
-            {"wname": "pinentry"},  # GPG key password entry
+            *[
+                Match(wm_class=x)
+                for x in [
+                    "Guake",
+                    "Conky",
+                    "confirm",
+                    "dialog",
+                    "download",
+                    "error",
+                    "file_progress",
+                    "notification",
+                    "splash",
+                    "ssh-askpass",
+                    "toolbar",
+                ]
+            ],
+            Match(title="pinentry"),
         ],
         border_width=0,
     )
