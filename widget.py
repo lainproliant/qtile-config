@@ -56,7 +56,7 @@ class CustomNetwork(InLoopPollText):
         ("eth_format", "{iface}:{addresses}", "The format for ethernet ifaces."),
         (
             "wifi_format",
-            "{iface}:{addresses}:{essid}:{quality:.2%}",
+            "{iface}:{addresses}/{essid}",
             "The format for wifi ifaces",
         ),
     ]
@@ -84,7 +84,6 @@ class CustomNetwork(InLoopPollText):
             statuses.append(
                 self.wifi_format.format(
                     essid=essid,
-                    quality=quality / 70,
                     iface=iface,
                     addresses=",".join(addresses),
                 )

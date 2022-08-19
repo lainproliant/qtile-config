@@ -25,6 +25,14 @@ from libqtile.lazy import lazy
 
 from base16 import Base16
 from framework import config, config_set, inject, provide, setup
+from util import (
+    floats_to_front,
+    make_media,
+    media_to_front,
+    toggle_focus_floating,
+    window_to_next_screen,
+    window_to_prev_screen,
+)
 from widget import CustomMemory, CustomNetwork
 
 
@@ -72,30 +80,40 @@ def mod() -> str:
 @config
 def keys(mod, groups) -> List[Key]:
     keys = [
-        # --> Pane navigation commands.
+        # --> Navigation commands.
         Key([mod], "j", lazy.layout.down()),
         Key([mod], "k", lazy.layout.up()),
         Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
         Key([mod, "shift"], "k", lazy.layout.shuffle_up()),
         Key([mod], "h", lazy.layout.previous()),
         Key([mod], "l", lazy.layout.next()),
+        Key([mod], "w", lazy.prev_screen()),
+        Key([mod], "e", lazy.next_screen()),
+        # --> Window state commands.
+        Key([mod], "f", lazy.window.toggle_floating()),
+        Key([mod, "shift"], "f", lazy.window.toggle_fullscreen()),
+        Key([mod, "shift"], "c", lazy.window.kill()),
+        Key([mod, "shift"], "w", lazy.function(window_to_prev_screen)),
+        Key([mod, "shift"], "e", lazy.function(window_to_next_screen)),
         Key([mod, "shift"], "h", lazy.layout.client_to_previous()),
-        Key([mod, "shift"], "l", lazy.layout.client_to_next()),
+        Key([mod], "b", lazy.function(toggle_focus_floating)),
+        Key([mod, "shift"], "b", lazy.function(floats_to_front)),
+        Key([mod, "shift"], "v", lazy.function(make_media)),
+        Key([mod], "v", lazy.function(media_to_front)),
+        # --> Layout modification commands.
+        Key([mod, "shift"], "space", lazy.next_layout()),
+        Key([mod], "space", lazy.layout.flip()),
+        Key([mod], "r", lazy.layout.rotate()),
+        Key([mod], "t", lazy.layout.toggle_split()),
         Key([mod], "backslash", lazy.layout.add()),
         Key([mod, "shift"], "backslash", lazy.layout.delete()),
-        # --> Window state commands.
-        Key([mod], "f", lazy.window.toggle_fullscreen()),
-        Key([mod, "shift"], "f", lazy.window.toggle_floating()),
-        Key([mod, "shift"], "c", lazy.window.kill()),
-        # --> Layout navigation commands.
-        Key([mod], "space", lazy.layout.rotate()),
-        Key([mod, "shift"], "space", lazy.next_layout()),
-        Key([mod], "t", lazy.layout.toggle_split()),
-        # --> Spawn commands
+        Key([mod], "comma", lazy.layout.grow()),
+        Key([mod], "period", lazy.layout.shrink()),
+        # --> Spawn commands.
         Key([mod], "Return", lazy.spawn(util("program_menu"))),
         Key([mod, "shift"], "Return", lazy.spawn(util("terminal"))),
         Key([mod, "shift"], "o", lazy.spawn(util("browser"))),
-        # --> Process commands
+        # --> Qtile process commands.
         Key([mod], "q", lazy.restart()),
         Key([mod, "shift"], "q", lazy.shutdown()),
     ]
@@ -136,7 +154,7 @@ def mouse(mod):
 # -------------------------------------------------------------------
 @config
 def borders(base16: Base16):
-    return dict(border_focus=base16(0x05), border_normal=base16(0x00))
+    return dict(border_width=4, border_focus=base16(0x05), border_normal=base16(0x00))
 
 
 # -------------------------------------------------------------------
@@ -144,7 +162,8 @@ def borders(base16: Base16):
 def layouts(borders):
     return [
         layout.Max(name="[ ]"),
-        layout.Stack(num_stacks=1, name="[|]", border_width=4, **borders),
+        layout.Stack(num_stacks=1, name="[|]", **borders),
+        layout.xmonad.MonadTall(name="[]-", **borders)
         # Try more layouts by unleashing below layouts.
         # layout.Bsp(),
         # layout.Columns(),
@@ -205,7 +224,7 @@ def group_box_factory(base16: Base16) -> Callable[[], widget.GroupBox]:
             highlight_method="block",
             background=base16(0x00),
             inactive=base16(0x03),
-            this_current_screen_border=base16(0x08),
+            this_current_screen_border=base16(0x02),
             this_screen_border=base16(0x0E),
             other_screen_current_border=base16(0x01),
             other_screen_border=base16(0x01),
@@ -277,7 +296,7 @@ def floating_layout():
 def other_settings():
     return {
         "auto_fullscreen": True,
-        "bring_front_click": True,
+        "bring_front_click": False,
         "cursor_warp": True,
         "dgroups_app_rules": [],
         "dgroups_key_binder": None,
