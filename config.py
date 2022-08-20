@@ -26,9 +26,9 @@ from libqtile.lazy import lazy
 from base16 import Base16
 from framework import config, config_set, inject, provide, setup
 from util import (
+    MediaContainer,
+    adjust_opacity,
     floats_to_front,
-    make_media,
-    media_to_front,
     toggle_focus_floating,
     window_to_next_screen,
     window_to_prev_screen,
@@ -98,8 +98,17 @@ def keys(mod, groups) -> List[Key]:
         Key([mod, "shift"], "h", lazy.layout.client_to_previous()),
         Key([mod], "b", lazy.function(toggle_focus_floating)),
         Key([mod, "shift"], "b", lazy.function(floats_to_front)),
-        Key([mod, "shift"], "v", lazy.function(make_media)),
-        Key([mod], "v", lazy.function(media_to_front)),
+        Key([mod, "shift"], "v", lazy.function(MediaContainer.make_media)),
+        Key([mod], "n", lazy.function(adjust_opacity(0.1))),
+        Key([mod, "shift"], "n", lazy.function(adjust_opacity(-0.01))),
+        # --> Media window controls
+        Key([mod], "v", lazy.function(MediaContainer.media_to_front)),
+        Key([mod], "slash", lazy.function(MediaContainer.adjust_size_ratio(0.1))),
+        Key([mod, "shift"], "slash", lazy.function(MediaContainer.adjust_size_ratio(-0.1))),
+        Key([mod], "semicolon", lazy.function(MediaContainer.adjust_pad_ratio_x(0.05))),
+        Key([mod, "shift"], "semicolon", lazy.function(MediaContainer.adjust_pad_ratio_x(-0.05))),
+        Key([mod], "apostrophe", lazy.function(MediaContainer.adjust_pad_ratio_y(0.05))),
+        Key([mod, "shift"], "apostrophe", lazy.function(MediaContainer.adjust_pad_ratio_y(-0.05))),
         # --> Layout modification commands.
         Key([mod, "shift"], "space", lazy.next_layout()),
         Key([mod], "space", lazy.layout.flip()),
