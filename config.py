@@ -102,7 +102,7 @@ def keys(mod, groups) -> List[Key]:
         Key([mod], "n", lazy.function(adjust_opacity(0.1))),
         Key([mod, "shift"], "n", lazy.function(adjust_opacity(-0.01))),
         # --> Media window controls
-        Key([mod], "v", lazy.function(MediaContainer.media_to_front)),
+        Key([mod], "v", lazy.function(MediaContainer.media_front_toggle)),
         Key([mod], "slash", lazy.function(MediaContainer.adjust_size_ratio(0.1))),
         Key([mod, "shift"], "slash", lazy.function(MediaContainer.adjust_size_ratio(-0.1))),
         Key([mod], "semicolon", lazy.function(MediaContainer.adjust_pad_ratio_x(0.05))),

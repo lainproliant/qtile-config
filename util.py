@@ -11,13 +11,15 @@ from typing import Optional
 
 from libqtile.core.manager import Qtile
 from libqtile.backend.base import Window
+from libqtile import qtile, hook
 
 # --------------------------------------------------------------------
 class MediaContainer:
     size_ratio = 3.0
     pad_ratio_x = 0.05
     pad_ratio_y = 0.1
-
+    current_group_name = None
+    visible = True
     window: Optional[Window] = None
 
     @classmethod
@@ -28,19 +30,37 @@ class MediaContainer:
         assert qtile.current_window is not None
         prev_window = qtile.current_window
 
+        if cls.window is not None:
+            cls.forget_media()
         cls.window = qtile.current_window
         cls.position_media_window(qtile)
 
-        if prev_window is not None:
-            prev_window.cmd_focus()
+        prev_window.cmd_focus()
 
     @classmethod
-    def media_to_front(cls, qtile: Qtile):
+    def forget_media(cls, unfloat=True):
         """
-        Bring the media window to front.
+        Forget about the media window, and unfloat it.
+        """
+        if unfloat and cls.window is not None:
+            cls.window.floating = False
+        cls.window = None
+        # Reset for the next media window.
+        cls.visible = True
+        cls.current_group_name = None
+
+    @classmethod
+    def media_front_toggle(cls, qtile: Qtile):
+        """
+        Toggle the media to the front or back.
+
+        If the current group is a different group, instead move the media
+        window to that group and show it.
         """
 
         assert cls.window is not None
+        cls.visible = not cls.visible
+
         cls.position_media_window(qtile)
 
     @classmethod
@@ -73,13 +93,16 @@ class MediaContainer:
         prev_window = qtile.current_window
         info = qtile.current_screen.cmd_info()
 
+        cls.window.minimized = False
+
         width = info["width"]
         height = info["height"]
-        media_width = width / cls.size_ratio
-        media_height = height / cls.size_ratio
 
-        offset_x = max(0, width - media_width - (media_width * cls.pad_ratio_x))
-        offset_y = max(0, media_height * cls.pad_ratio_y)
+        media_width = int(width / cls.size_ratio)
+        media_height = int(height / cls.size_ratio)
+
+        offset_x = int(max(0, width - media_width - (media_width * cls.pad_ratio_x)))
+        offset_y = int(max(0, media_height * cls.pad_ratio_y))
 
         if cls.size_ratio == 1:
             offset_x = 0
@@ -89,10 +112,29 @@ class MediaContainer:
         cls.window.cmd_set_position(offset_x, offset_y)
 
         cls.window.togroup(qtile.current_group.name, switch_group=True)
+        cls.current_group_name = qtile.current_group.name
         cls.window.cmd_bring_to_front()
 
         if prev_window is not None:
             prev_window.cmd_focus()
+
+        if not cls.visible:
+            cls.window.minimized = True
+
+
+# --------------------------------------------------------------------
+@hook.subscribe.client_killed
+def on_window_close(window: Window):
+    assert isinstance(qtile, Qtile)
+    MediaContainer.forget_media(unfloat=False)
+
+
+# --------------------------------------------------------------------
+@hook.subscribe.setgroup
+def on_group_changed():
+    assert isinstance(qtile, Qtile)
+    if MediaContainer.window is not None:
+        MediaContainer.position_media_window(qtile)
 
 
 # --------------------------------------------------------------------
@@ -144,6 +186,7 @@ def window_to_prev_screen(qtile: Qtile, switch_group=False, switch_screen=False)
 
 # --------------------------------------------------------------------
 def window_to_next_screen(qtile: Qtile, switch_group=False, switch_screen=False):
+    assert qtile.current_window is not None
     i = qtile.screens.index(qtile.current_screen)
     if i + 1 != len(qtile.screens):
         group = qtile.screens[i + 1].group.name
