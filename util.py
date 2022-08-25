@@ -12,6 +12,7 @@ from typing import Optional
 from libqtile.core.manager import Qtile
 from libqtile.backend.base import Window
 from libqtile import qtile, hook
+from libqtile.log_utils import logger
 
 # --------------------------------------------------------------------
 class MediaContainer:
@@ -98,11 +99,13 @@ class MediaContainer:
         width = info["width"]
         height = info["height"]
 
+        logger.error(f"{width=}, {height=}")
+
         media_width = int(width / cls.size_ratio)
         media_height = int(height / cls.size_ratio)
 
-        offset_x = int(max(0, width - media_width - (media_width * cls.pad_ratio_x)))
-        offset_y = int(max(0, media_height * cls.pad_ratio_y))
+        offset_x = qtile.current_screen.x + int(max(0, width - media_width - (media_width * cls.pad_ratio_x)))
+        offset_y = qtile.current_screen.y + int(max(0, media_height * cls.pad_ratio_y))
 
         if cls.size_ratio == 1:
             offset_x = 0
