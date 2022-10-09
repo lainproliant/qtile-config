@@ -19,7 +19,6 @@ class MediaContainer:
     size_ratio = 3.0
     pad_ratio_x = 0.05
     pad_ratio_y = 0.1
-    current_group_name = None
     visible = True
     window: Optional[Window] = None
 
@@ -29,14 +28,16 @@ class MediaContainer:
         Make the current window the "media" window.
         """
         assert qtile.current_window is not None
-        prev_window = qtile.current_window
 
-        if cls.window is not None:
+        if qtile.current_window is cls.window:
             cls.forget_media()
-        cls.window = qtile.current_window
-        cls.position_media_window(qtile)
 
-        prev_window.cmd_focus()
+        else:
+            if cls.window is not None:
+                cls.forget_media()
+            cls.window = qtile.current_window
+            cls.position_media_window(qtile)
+            focus_last_non_floating_window(qtile)
 
     @classmethod
     def forget_media(cls, unfloat=True):
@@ -48,7 +49,6 @@ class MediaContainer:
         cls.window = None
         # Reset for the next media window.
         cls.visible = True
-        cls.current_group_name = None
 
     @classmethod
     def media_front_toggle(cls, qtile: Qtile):
@@ -91,20 +91,23 @@ class MediaContainer:
     @classmethod
     def position_media_window(cls, qtile: Qtile):
         assert cls.window is not None
-        prev_window = qtile.current_window
         info = qtile.current_screen.cmd_info()
+
+        if not cls.visible:
+            cls.window.minimized = True
+            return
 
         cls.window.minimized = False
 
         width = info["width"]
         height = info["height"]
 
-        logger.error(f"{width=}, {height=}")
-
         media_width = int(width / cls.size_ratio)
         media_height = int(height / cls.size_ratio)
 
-        offset_x = qtile.current_screen.x + int(max(0, width - media_width - (media_width * cls.pad_ratio_x)))
+        offset_x = qtile.current_screen.x + int(
+            max(0, width - media_width - (media_width * cls.pad_ratio_x))
+        )
         offset_y = qtile.current_screen.y + int(max(0, media_height * cls.pad_ratio_y))
 
         if cls.size_ratio == 1:
@@ -112,24 +115,27 @@ class MediaContainer:
             offset_y = 0
 
         cls.window.cmd_set_size_floating(media_width, media_height)
-        cls.window.cmd_set_position(offset_x, offset_y)
-
-        cls.window.togroup(qtile.current_group.name, switch_group=True)
-        cls.current_group_name = qtile.current_group.name
+        cls.window.cmd_set_position_floating(offset_x, offset_y)
         cls.window.cmd_bring_to_front()
 
-        if prev_window is not None:
-            prev_window.cmd_focus()
 
-        if not cls.visible:
-            cls.window.minimized = True
+# --------------------------------------------------------------------
+@hook.subscribe.client_new
+def on_window_open(window: Window):
+    assert isinstance(qtile, Qtile)
+    if MediaContainer.window is not None:
+        MediaContainer.position_media_window(qtile)
 
 
 # --------------------------------------------------------------------
 @hook.subscribe.client_killed
 def on_window_close(window: Window):
     assert isinstance(qtile, Qtile)
-    MediaContainer.forget_media(unfloat=False)
+    if MediaContainer.window is not None:
+        if MediaContainer.window.has_focus:
+            focus_last_non_floating_window(qtile)
+        if window is MediaContainer.window:
+            MediaContainer.forget_media(unfloat=False)
 
 
 # --------------------------------------------------------------------
@@ -139,6 +145,21 @@ def on_group_changed():
     if MediaContainer.window is not None:
         MediaContainer.position_media_window(qtile)
 
+
+# --------------------------------------------------------------------
+def focus_last_non_floating_window(qtile: Qtile):
+    if MediaContainer.window is not None:
+        group = qtile.current_group
+        last_window = next(
+            reversed(
+                [w for w in group.focus_history if w is not w.floating]
+            ),
+            None,
+        )
+        if last_window is not None:
+            group.focus(last_window)
+        else:
+            group.focus(None)
 
 # --------------------------------------------------------------------
 def toggle_focus_floating(qtile: Qtile):
