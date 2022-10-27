@@ -122,6 +122,11 @@ def keys(mod, groups) -> List[Key]:
         Key([mod], "Return", lazy.spawn(util("program_menu"))),
         Key([mod, "shift"], "Return", lazy.spawn(util("terminal"))),
         Key([mod, "shift"], "o", lazy.spawn(util("browser"))),
+        Key([mod], "p", lazy.spawn(util("next_bg"))),
+        Key([mod], "o", lazy.spawn(util("prev_bg"))),
+        Key([mod, "shift"], "p", lazy.spawn(util("random_bg"))),
+        Key([mod, "control"], "space", lazy.spawn(util("toggle_touchpad"))),
+
         # --> Qtile process commands.
         Key([mod], "q", lazy.restart()),
         Key([mod, "shift"], "q", lazy.shutdown()),
@@ -193,7 +198,7 @@ def layouts(borders):
 def widget_defaults(font_info, base16: Base16) -> dict:
     return dict(
         font=font_info["font"],
-        fontsize=font_info["size"],
+        fontsize=font_info["size"] + 14,
         padding=1,
         background=base16(0x00),
         foreground=base16(0x05),
@@ -264,7 +269,7 @@ def screens(
                     battery_widget,
                     widget.Clock(format="%a %m/%d/%Y %H:%M:%S"),
                 ],
-                size=26,
+                size=48,
                 **widget_defaults
             ),
         )
