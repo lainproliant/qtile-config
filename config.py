@@ -55,7 +55,11 @@ def num_screens() -> int:
 @provide
 def font_info() -> dict:
     with open(Path.home() / ".font/config.json", "r") as infile:
-        return json.load(infile)
+        info = json.load(infile)
+        info["original"] = info["font"]
+        info["info"] = "Overpass"
+        info["font"] = "Overpass Mono"
+        return info
 
 
 # -------------------------------------------------------------------
@@ -66,8 +70,8 @@ def base16() -> Base16:
 
 # -------------------------------------------------------------------
 @config
-def groups() -> List[Group]:
-    return [Group(str(i)) for i in range(1, 10)]
+def groups(circle_numbers) -> List[Group]:
+    return [Group(str(i), label=circle_numbers[i]) for i in range(1, 10)]
 
 
 # -------------------------------------------------------------------
@@ -104,11 +108,25 @@ def keys(mod, groups) -> List[Key]:
         # --> Media window controls
         Key([mod], "v", lazy.function(MediaContainer.media_front_toggle)),
         Key([mod], "slash", lazy.function(MediaContainer.adjust_size_ratio(0.1))),
-        Key([mod, "shift"], "slash", lazy.function(MediaContainer.adjust_size_ratio(-0.1))),
+        Key(
+            [mod, "shift"],
+            "slash",
+            lazy.function(MediaContainer.adjust_size_ratio(-0.1)),
+        ),
         Key([mod], "semicolon", lazy.function(MediaContainer.adjust_pad_ratio_x(0.05))),
-        Key([mod, "shift"], "semicolon", lazy.function(MediaContainer.adjust_pad_ratio_x(-0.05))),
-        Key([mod], "apostrophe", lazy.function(MediaContainer.adjust_pad_ratio_y(0.05))),
-        Key([mod, "shift"], "apostrophe", lazy.function(MediaContainer.adjust_pad_ratio_y(-0.05))),
+        Key(
+            [mod, "shift"],
+            "semicolon",
+            lazy.function(MediaContainer.adjust_pad_ratio_x(-0.05)),
+        ),
+        Key(
+            [mod], "apostrophe", lazy.function(MediaContainer.adjust_pad_ratio_y(0.05))
+        ),
+        Key(
+            [mod, "shift"],
+            "apostrophe",
+            lazy.function(MediaContainer.adjust_pad_ratio_y(-0.05)),
+        ),
         # --> Layout modification commands.
         Key([mod, "shift"], "space", lazy.next_layout()),
         Key([mod], "space", lazy.layout.flip()),
@@ -126,7 +144,6 @@ def keys(mod, groups) -> List[Key]:
         Key([mod], "o", lazy.spawn(util("prev_bg"))),
         Key([mod, "shift"], "p", lazy.spawn(util("random_bg"))),
         Key([mod, "control"], "space", lazy.spawn(util("toggle_touchpad"))),
-
         # --> Qtile process commands.
         Key([mod], "q", lazy.restart()),
         Key([mod, "shift"], "q", lazy.shutdown()),
@@ -207,8 +224,14 @@ def widget_defaults(font_info, base16: Base16) -> dict:
 
 # -------------------------------------------------------------------
 @config
-def extension_defualts(widget_defaults):
+def extension_defaults(widget_defaults):
     return widget_defaults.copy()
+
+
+# -------------------------------------------------------------------
+@provide
+def circle_numbers():
+    return "0❶❷❸❹❺❻❼❽❾"
 
 
 # -------------------------------------------------------------------
@@ -222,9 +245,9 @@ def sep_factory() -> Callable[[], widget.Sep]:
 
 # -------------------------------------------------------------------
 @provide
-def battery_widget() -> widget.Battery:
+def battery_widget(font_info) -> widget.Battery:
     return widget.Battery(
-        format="{char}{percent:2.0%} ",
+        format="{char}{percent:2.0%}",
         charge_char="+",
         discharge_char="-",
         empty_char="XX",
@@ -233,13 +256,15 @@ def battery_widget() -> widget.Battery:
 
 # -------------------------------------------------------------------
 @provide
-def group_box_factory(base16: Base16) -> Callable[[], widget.GroupBox]:
+def group_box_factory(base16: Base16, font_info) -> Callable[[], widget.GroupBox]:
     def factory():
         return widget.GroupBox(
-            highlight_method="block",
+            font=font_info["original"],
+            highlight_method="text",
+            hide_unused=True,
             background=base16(0x00),
             inactive=base16(0x03),
-            this_current_screen_border=base16(0x02),
+            this_current_screen_border=base16(0x0A),
             this_screen_border=base16(0x0E),
             other_screen_current_border=base16(0x01),
             other_screen_border=base16(0x01),
@@ -251,7 +276,12 @@ def group_box_factory(base16: Base16) -> Callable[[], widget.GroupBox]:
 # -------------------------------------------------------------------
 @config
 def screens(
-    num_screens, widget_defaults, battery_widget, group_box_factory, sep_factory
+    num_screens,
+    widget_defaults,
+    battery_widget,
+    group_box_factory,
+    sep_factory,
+    font_info,
 ):
     return [
         Screen(
@@ -261,13 +291,20 @@ def screens(
                     sep_factory(),
                     widget.CurrentLayout(),
                     sep_factory(),
-                    widget.WindowName(),
-                    CustomNetwork(),
+                    widget.WindowName(
+                        width=bar.CALCULATED,
+                        empty_group_string="(empty)",
+                        font=font_info["info"],
+                    ),
                     sep_factory(),
+                    CustomNetwork(width=bar.STRETCH, font=font_info["info"]),
                     CustomMemory(),
                     widget.CPU(format="@{load_percent:02.0f}% "),
                     battery_widget,
-                    widget.Clock(format="%a %m/%d/%Y %H:%M:%S"),
+                    sep_factory(),
+                    widget.Clock(format="%a "),
+                    widget.Clock(format="%m/%d/%Y "),
+                    widget.Clock(format="%H:%M:%S"),
                 ],
                 size=48,
                 **widget_defaults
