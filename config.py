@@ -192,10 +192,10 @@ def borders(base16: Base16):
 @config
 def layouts(borders):
     return [
-        layout.Max(name="[ ]"),
-        layout.Stack(num_stacks=1, name="[|]", **borders),
-        layout.xmonad.MonadTall(name="[]-", **borders),
-        layout.xmonad.MonadWide(name="[-]", **borders)
+        layout.Max(name="max"),
+        layout.Stack(num_stacks=1, name="stk", **borders),
+        layout.xmonad.MonadTall(name="xmt", **borders),
+        layout.xmonad.MonadWide(name="xmw", **borders)
         # Try more layouts by unleashing below layouts.
         # layout.Bsp(),
         # layout.Columns(),
@@ -289,7 +289,7 @@ def screens(
                 [
                     group_box_factory(),
                     sep_factory(),
-                    widget.CurrentLayout(),
+                    widget.CurrentLayout(font=font_info["info"]),
                     sep_factory(),
                     widget.WindowName(
                         width=bar.CALCULATED,
