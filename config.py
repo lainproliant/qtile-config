@@ -215,7 +215,7 @@ def layouts(borders):
 def widget_defaults(font_info, base16: Base16) -> dict:
     return dict(
         font=font_info["font"],
-        fontsize=font_info["size"] + 14,
+        fontsize=font_info["size"],
         padding=1,
         background=base16(0x00),
         foreground=base16(0x05),
@@ -256,15 +256,14 @@ def battery_widget(font_info) -> widget.Battery:
 
 # -------------------------------------------------------------------
 @provide
-def group_box_factory(base16: Base16, font_info) -> Callable[[], widget.GroupBox]:
+def group_box_factory(base16: Base16, font_info, widget_defaults) -> Callable[[], widget.GroupBox]:
     def factory():
         return widget.GroupBox(
-            font=font_info["original"],
             highlight_method="text",
             hide_unused=True,
-            background=base16(0x00),
+            active=base16(0x03),
             inactive=base16(0x03),
-            this_current_screen_border=base16(0x0A),
+            this_current_screen_border=base16(0x07),
             this_screen_border=base16(0x0E),
             other_screen_current_border=base16(0x01),
             other_screen_border=base16(0x01),
@@ -306,7 +305,7 @@ def screens(
                     widget.Clock(format="%m/%d/%Y "),
                     widget.Clock(format="%H:%M:%S"),
                 ],
-                size=48,
+                size=24,
                 **widget_defaults
             ),
         )
