@@ -138,6 +138,7 @@ def keys(mod, groups) -> List[Key]:
         Key([mod], "period", lazy.layout.shrink()),
         # --> Spawn commands.
         Key([mod], "Return", lazy.spawn(util("program_menu"))),
+        Key([mod], "Escape", lazy.spawn(util("lock"))),
         Key([mod, "shift"], "Return", lazy.spawn(util("terminal"))),
         Key([mod, "shift"], "o", lazy.spawn(util("browser"))),
         Key([mod], "p", lazy.spawn(util("next_bg"))),
