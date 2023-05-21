@@ -216,7 +216,7 @@ def layouts(borders):
 def widget_defaults(font_info, base16: Base16) -> dict:
     return dict(
         font=font_info["font"],
-        fontsize=font_info["size"],
+        fontsize=font_info["size"] + 8,
         padding=1,
         background=base16(0x00),
         foreground=base16(0x05),
@@ -306,7 +306,7 @@ def screens(
                     widget.Clock(format="%m/%d/%Y "),
                     widget.Clock(format="%H:%M:%S"),
                 ],
-                size=24,
+                size=36,
                 **widget_defaults
             ),
         )

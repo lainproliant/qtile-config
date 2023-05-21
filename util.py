@@ -14,6 +14,7 @@ from libqtile.backend.base import Window
 from libqtile import qtile, hook
 from libqtile.log_utils import logger
 
+
 # --------------------------------------------------------------------
 class MediaContainer:
     size_ratio = 3.0
@@ -132,8 +133,7 @@ def on_window_open(window: Window):
 def on_window_close(window: Window):
     assert isinstance(qtile, Qtile)
     if MediaContainer.window is not None:
-        if MediaContainer.window.has_focus:
-            focus_last_non_floating_window(qtile)
+        focus_last_non_floating_window(qtile)
         if window is MediaContainer.window:
             MediaContainer.forget_media(unfloat=False)
 
@@ -150,16 +150,17 @@ def on_group_changed():
 def focus_last_non_floating_window(qtile: Qtile):
     if MediaContainer.window is not None:
         group = qtile.current_group
-        last_window = next(
-            reversed(
-                [w for w in group.focus_history if w is not w.floating]
-            ),
-            None,
-        )
+        windows = reversed([w for w in group.focus_history if not w.floating])
+        last_window = next(windows, None)
+
+        if last_window is MediaContainer.window:
+            last_window = next(windows, None)
+
         if last_window is not None:
             group.focus(last_window)
         else:
             group.focus(None)
+
 
 # --------------------------------------------------------------------
 def toggle_focus_floating(qtile: Qtile):
