@@ -85,23 +85,23 @@ def mod() -> str:
 def keys(mod, groups) -> List[Key]:
     keys = [
         # --> Navigation commands.
-        Key([mod], "j", lazy.layout.down()),
-        Key([mod], "k", lazy.layout.up()),
+        Key([mod], "j", lazy.layout.next()),
+        Key([mod], "k", lazy.layout.previous()),
+        Key([mod, "shift"], "h", lazy.layout.shuffle_left()),
         Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
         Key([mod, "shift"], "k", lazy.layout.shuffle_up()),
-        Key([mod], "h", lazy.layout.previous()),
-        Key([mod], "l", lazy.layout.next()),
+        Key([mod, "shift"], "l", lazy.layout.shuffle_right()),
+        Key([mod], "h", lazy.layout.left()),
+        Key([mod], "l", lazy.layout.right()),
         Key([mod], "w", lazy.prev_screen()),
         Key([mod], "e", lazy.next_screen()),
         # --> Window state commands.
+
         Key([mod], "f", lazy.window.toggle_floating()),
         Key([mod, "shift"], "f", lazy.window.toggle_fullscreen()),
         Key([mod, "shift"], "c", lazy.window.kill()),
         Key([mod, "shift"], "w", lazy.function(window_to_prev_screen)),
         Key([mod, "shift"], "e", lazy.function(window_to_next_screen)),
-        Key([mod, "shift"], "h", lazy.layout.client_to_previous()),
-        Key([mod], "b", lazy.function(toggle_focus_floating)),
-        Key([mod, "shift"], "b", lazy.function(floats_to_front)),
         Key([mod, "shift"], "v", lazy.function(MediaContainer.make_media)),
         Key([mod], "n", lazy.function(adjust_opacity(0.1))),
         Key([mod, "shift"], "n", lazy.function(adjust_opacity(-0.01))),
@@ -134,8 +134,8 @@ def keys(mod, groups) -> List[Key]:
         Key([mod], "t", lazy.layout.toggle_split()),
         Key([mod], "backslash", lazy.layout.add()),
         Key([mod, "shift"], "backslash", lazy.layout.delete()),
-        Key([mod], "comma", lazy.layout.grow()),
-        Key([mod], "period", lazy.layout.shrink()),
+        Key([mod], "period", lazy.layout.grow()),
+        Key([mod], "comma", lazy.layout.shrink()),
         # --> Spawn commands.
         Key([mod], "Return", lazy.spawn(util("program_menu"))),
         Key([mod], "Escape", lazy.spawn(util("lock"))),
@@ -186,7 +186,7 @@ def mouse(mod):
 # -------------------------------------------------------------------
 @config
 def borders(base16: Base16):
-    return dict(border_width=4, border_focus=base16(0x05), border_normal=base16(0x00))
+    return dict(border_width=2, border_focus=base16(0x05), border_normal=base16(0x00))
 
 
 # -------------------------------------------------------------------
@@ -194,16 +194,14 @@ def borders(base16: Base16):
 def layouts(borders):
     return [
         layout.Max(name="max"),
-        layout.Stack(num_stacks=1, name="stk", **borders),
-        layout.xmonad.MonadTall(name="xmt", **borders),
-        layout.xmonad.MonadWide(name="xmw", **borders)
+        layout.Columns(name="col", **borders),
+        layout.xmonad.MonadTall(name="mt", **borders),
+        layout.xmonad.MonadWide(name="mw", **borders),
         # Try more layouts by unleashing below layouts.
         # layout.Bsp(),
-        # layout.Columns(),
         # layout.Matrix(),
-        # layout.MonadTall(),
-        # layout.MonadWide(),
         # layout.RatioTile(),
+        # layout.Stack(num_stacks=1, name="stk", **borders),
         # layout.Tile(),
         # layout.TreeTab(),
         # layout.VerticalTile(),
