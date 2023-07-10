@@ -28,7 +28,7 @@ from framework import config, config_set, inject, provide, setup
 from util import (
     MediaContainer,
     adjust_opacity,
-    floats_to_front,
+    ground_all_floats,
     toggle_focus_floating,
     window_to_next_screen,
     window_to_prev_screen,
@@ -98,11 +98,12 @@ def keys(mod, groups) -> List[Key]:
         # --> Window state commands.
 
         Key([mod], "f", lazy.window.toggle_floating()),
-        Key([mod, "shift"], "f", lazy.window.toggle_fullscreen()),
         Key([mod, "shift"], "c", lazy.window.kill()),
-        Key([mod, "shift"], "w", lazy.function(window_to_prev_screen)),
         Key([mod, "shift"], "e", lazy.function(window_to_next_screen)),
+        Key([mod, "shift"], "f", lazy.window.toggle_fullscreen()),
+        Key([mod, "shift"], "g", lazy.function(ground_all_floats)),
         Key([mod, "shift"], "v", lazy.function(MediaContainer.make_media)),
+        Key([mod, "shift"], "w", lazy.function(window_to_prev_screen)),
         Key([mod], "n", lazy.function(adjust_opacity(0.1))),
         Key([mod, "shift"], "n", lazy.function(adjust_opacity(-0.01))),
         # --> Media window controls
@@ -255,7 +256,9 @@ def battery_widget(font_info) -> widget.Battery:
 
 # -------------------------------------------------------------------
 @provide
-def group_box_factory(base16: Base16, font_info, widget_defaults) -> Callable[[], widget.GroupBox]:
+def group_box_factory(
+    base16: Base16, font_info, widget_defaults
+) -> Callable[[], widget.GroupBox]:
     def factory():
         return widget.GroupBox(
             highlight_method="text",

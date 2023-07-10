@@ -199,6 +199,17 @@ def floats_to_front(qtile: Qtile):
 
 
 # --------------------------------------------------------------------
+def ground_all_floats(qtile: Qtile):
+    """
+    Bring all floating windows in the current group back into
+    the tiling layout.
+    """
+    for window in qtile.current_group.windows:
+        if window.floating:
+            window.toggle_floating()
+
+
+# --------------------------------------------------------------------
 def window_to_prev_screen(qtile: Qtile, switch_group=False, switch_screen=False):
     assert qtile.current_window is not None
     i = qtile.screens.index(qtile.current_screen)
