@@ -33,6 +33,7 @@ from util import (
     window_to_next_screen,
     window_to_prev_screen,
 )
+from constants import FONT_SCALING_RATIO
 from widget import CustomMemory, CustomNetwork
 
 
@@ -96,7 +97,6 @@ def keys(mod, groups) -> List[Key]:
         Key([mod], "w", lazy.prev_screen()),
         Key([mod], "e", lazy.next_screen()),
         # --> Window state commands.
-
         Key([mod], "f", lazy.window.toggle_floating()),
         Key([mod, "shift"], "c", lazy.window.kill()),
         Key([mod, "shift"], "e", lazy.function(window_to_next_screen)),
@@ -236,9 +236,9 @@ def circle_numbers():
 
 # -------------------------------------------------------------------
 @provide
-def sep_factory() -> Callable[[], widget.Sep]:
+def sep_factory(base16: Base16) -> Callable[[], widget.Sep]:
     def factory():
-        return widget.Sep(padding=16)
+        return widget.Sep(padding=16, foreground=base16(0x03))
 
     return factory
 
@@ -277,6 +277,7 @@ def group_box_factory(
 # -------------------------------------------------------------------
 @config
 def screens(
+    base16: Base16,
     num_screens,
     widget_defaults,
     battery_widget,
@@ -284,6 +285,7 @@ def screens(
     sep_factory,
     font_info,
 ):
+    scaled_fontsize = font_info["size"] * FONT_SCALING_RATIO
     return [
         Screen(
             top=bar.Bar(
@@ -293,18 +295,34 @@ def screens(
                     widget.CurrentLayout(font=font_info["info"]),
                     sep_factory(),
                     widget.WindowName(
-                        width=bar.CALCULATED,
+                        width=bar.STRETCH,
                         empty_group_string="(empty)",
                         font=font_info["info"],
+                        fontsize=scaled_fontsize,
                     ),
                     sep_factory(),
-                    CustomNetwork(width=bar.STRETCH, font=font_info["info"]),
-                    CustomMemory(),
-                    widget.CPU(format="@{load_percent:02.0f}% "),
+                    CustomNetwork(
+                        font=font_info["info"],
+                        fontsize=scaled_fontsize,
+                        foreground=base16(0x03),
+                    ),
+                    sep_factory(),
+                    CustomMemory(fontsize=scaled_fontsize, foreground=base16(0x03)),
+                    widget.CPU(
+                        format="@{load_percent:02.0f}% ",
+                        fontsize=scaled_fontsize,
+                        foreground=base16(0x03),
+                    ),
                     battery_widget,
                     sep_factory(),
-                    widget.Clock(format="%a "),
-                    widget.Clock(format="%m/%d/%Y "),
+                    widget.Clock(
+                        format="%a ", fontsize=scaled_fontsize, foreground=base16(0x03)
+                    ),
+                    widget.Clock(
+                        format="%m/%d/%Y ",
+                        fontsize=scaled_fontsize,
+                        foreground=base16(0x03),
+                    ),
                     widget.Clock(format="%H:%M:%S"),
                 ],
                 size=36,
