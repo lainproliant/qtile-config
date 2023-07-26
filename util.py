@@ -118,31 +118,27 @@ class MediaContainer:
         cls.window.cmd_set_position_floating(offset_x, offset_y)
         cls.window.cmd_bring_to_front()
 
+    @classmethod
+    def setup_hooks(cls):
+        @hook.subscribe.client_new
+        def on_window_open(window: Window):
+            assert isinstance(qtile, Qtile)
+            if MediaContainer.window is not None:
+                MediaContainer.position_media_window(qtile)
 
-# --------------------------------------------------------------------
-@hook.subscribe.client_new
-def on_window_open(window: Window):
-    assert isinstance(qtile, Qtile)
-    if MediaContainer.window is not None:
-        MediaContainer.position_media_window(qtile)
+        @hook.subscribe.client_killed
+        def on_window_close(window: Window):
+            assert isinstance(qtile, Qtile)
+            if MediaContainer.window is not None:
+                focus_last_non_floating_window(qtile)
+                if window is MediaContainer.window:
+                    MediaContainer.forget_media(unfloat=False)
 
-
-# --------------------------------------------------------------------
-@hook.subscribe.client_killed
-def on_window_close(window: Window):
-    assert isinstance(qtile, Qtile)
-    if MediaContainer.window is not None:
-        focus_last_non_floating_window(qtile)
-        if window is MediaContainer.window:
-            MediaContainer.forget_media(unfloat=False)
-
-
-# --------------------------------------------------------------------
-@hook.subscribe.setgroup
-def on_group_changed():
-    assert isinstance(qtile, Qtile)
-    if MediaContainer.window is not None:
-        MediaContainer.position_media_window(qtile)
+        @hook.subscribe.setgroup
+        def on_group_changed():
+            assert isinstance(qtile, Qtile)
+            if MediaContainer.window is not None:
+                MediaContainer.position_media_window(qtile)
 
 
 # --------------------------------------------------------------------

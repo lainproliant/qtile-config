@@ -385,6 +385,8 @@ def other_settings():
 # -------------------------------------------------------------------
 @setup
 def setup_hooks():
+    MediaContainer.setup_hooks()
+
     @hook.subscribe.startup_once
     def autostart():
         subprocess.call(str(Path.home() / ".xinit" / "twm-common"))
