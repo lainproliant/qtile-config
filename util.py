@@ -30,7 +30,9 @@ class MediaContainer:
         assert qtile.current_window is not None
 
         if cls.window is not None:
+            window = cls.window
             cls.forget_media()
+            window.focus(True)
 
         else:
             cls.window = qtile.current_window
@@ -202,7 +204,7 @@ def ground_all_floats(qtile: Qtile):
     the tiling layout.
     """
     for window in qtile.current_group.windows:
-        if window.floating:
+        if window.floating and window is not MediaContainer.window:
             window.toggle_floating()
 
 
