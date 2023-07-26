@@ -12,7 +12,6 @@ from typing import Optional
 from libqtile.core.manager import Qtile
 from libqtile.backend.base import Window
 from libqtile import qtile, hook
-from libqtile.log_utils import logger
 
 
 # --------------------------------------------------------------------
@@ -30,15 +29,13 @@ class MediaContainer:
         """
         assert qtile.current_window is not None
 
-        if qtile.current_window is cls.window:
+        if cls.window is not None:
             cls.forget_media()
 
         else:
-            if cls.window is not None:
-                cls.forget_media()
             cls.window = qtile.current_window
-            cls.position_media_window(qtile)
             focus_last_non_floating_window(qtile)
+            cls.position_media_window(qtile)
 
     @classmethod
     def forget_media(cls, unfloat=True):

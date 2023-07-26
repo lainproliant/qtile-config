@@ -19,7 +19,7 @@ import subprocess
 from pathlib import Path
 from typing import Callable, List
 
-from libqtile import bar, hook, layout, widget
+from libqtile import qtile, bar, hook, layout, widget
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 
@@ -29,13 +29,12 @@ from util import (
     MediaContainer,
     adjust_opacity,
     ground_all_floats,
-    toggle_focus_floating,
     window_to_next_screen,
     window_to_prev_screen,
+    focus_last_non_floating_window,
 )
 from constants import FONT_SCALING_RATIO
 from widget import CustomMemory, CustomNetwork
-
 
 # -------------------------------------------------------------------
 def util(cmd: str) -> str:
@@ -86,7 +85,12 @@ def mod() -> str:
 def keys(mod, groups) -> List[Key]:
     keys = [
         # --> Navigation commands.
-        Key([mod], "j", lazy.layout.next()),
+        Key(
+            [mod],
+            "j",
+            lazy.layout.next(),
+            lazy.function(focus_last_non_floating_window),
+        ),
         Key([mod], "k", lazy.layout.previous()),
         Key([mod, "shift"], "h", lazy.layout.shuffle_left()),
         Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
@@ -326,7 +330,7 @@ def screens(
                     widget.Clock(format="%H:%M:%S"),
                 ],
                 size=36,
-                **widget_defaults
+                **widget_defaults,
             ),
         )
         for screen in range(num_screens)
@@ -391,6 +395,11 @@ def setup_hooks():
         transient = window.window.get_wm_transient_for()
         if dialog or transient:
             window.floating = True
+
+    @hook.subscribe.client_focus
+    def no_focus_mediawindow(window):
+        if window == MediaContainer.window:
+            focus_last_non_floating_window(qtile)
 
 
 # -------------------------------------------------------------------
