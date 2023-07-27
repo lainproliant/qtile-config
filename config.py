@@ -19,22 +19,23 @@ import subprocess
 from pathlib import Path
 from typing import Callable, List
 
-from libqtile import qtile, bar, hook, layout, widget
+from libqtile import bar, hook, layout, widget
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 
 from base16 import Base16
+from constants import FONT_SCALING_RATIO
 from framework import config, config_set, inject, provide, setup
+from media import MediaContainer
+from status import Status
 from util import (
-    MediaContainer,
     adjust_opacity,
     ground_all_floats,
     window_to_next_screen,
     window_to_prev_screen,
-    focus_last_non_floating_window,
 )
-from constants import FONT_SCALING_RATIO
-from widget import CustomMemory, CustomNetwork
+from widget import CustomMemory, CustomNetwork, FastGenPollText
+
 
 # -------------------------------------------------------------------
 def util(cmd: str) -> str:
@@ -85,12 +86,7 @@ def mod() -> str:
 def keys(mod, groups) -> List[Key]:
     keys = [
         # --> Navigation commands.
-        Key(
-            [mod],
-            "j",
-            lazy.layout.next(),
-            lazy.function(focus_last_non_floating_window),
-        ),
+        Key([mod], "j", lazy.layout.next()),
         Key([mod], "k", lazy.layout.previous()),
         Key([mod, "shift"], "h", lazy.layout.shuffle_left()),
         Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
@@ -108,29 +104,27 @@ def keys(mod, groups) -> List[Key]:
         Key([mod, "shift"], "g", lazy.function(ground_all_floats)),
         Key([mod, "shift"], "v", lazy.function(MediaContainer.make_media)),
         Key([mod, "shift"], "w", lazy.function(window_to_prev_screen)),
-        Key([mod], "n", lazy.function(adjust_opacity(0.1))),
+        Key([mod], "n", lazy.function(adjust_opacity(0.01))),
         Key([mod, "shift"], "n", lazy.function(adjust_opacity(-0.01))),
         # --> Media window controls
         Key([mod], "v", lazy.function(MediaContainer.media_front_toggle)),
-        Key([mod], "slash", lazy.function(MediaContainer.adjust_size_ratio(0.1))),
+        Key([mod], "slash", lazy.function(MediaContainer.adjust_size(0.01))),
         Key(
             [mod, "shift"],
             "slash",
-            lazy.function(MediaContainer.adjust_size_ratio(-0.1)),
+            lazy.function(MediaContainer.adjust_size(-0.01)),
         ),
-        Key([mod], "semicolon", lazy.function(MediaContainer.adjust_pad_ratio_x(0.05))),
+        Key([mod], "semicolon", lazy.function(MediaContainer.adjust_pad_x(0.01))),
         Key(
             [mod, "shift"],
             "semicolon",
-            lazy.function(MediaContainer.adjust_pad_ratio_x(-0.05)),
+            lazy.function(MediaContainer.adjust_pad_x(-0.01)),
         ),
-        Key(
-            [mod], "apostrophe", lazy.function(MediaContainer.adjust_pad_ratio_y(0.05))
-        ),
+        Key([mod], "apostrophe", lazy.function(MediaContainer.adjust_pad_y(0.01))),
         Key(
             [mod, "shift"],
             "apostrophe",
-            lazy.function(MediaContainer.adjust_pad_ratio_y(-0.05)),
+            lazy.function(MediaContainer.adjust_pad_y(-0.01)),
         ),
         # --> Layout modification commands.
         Key([mod, "shift"], "space", lazy.next_layout()),
@@ -305,6 +299,12 @@ def screens(
                         fontsize=scaled_fontsize,
                     ),
                     sep_factory(),
+                    FastGenPollText(
+                        func=Status.update,
+                        update_interval=Status.update_sec,
+                        fontsize=scaled_fontsize
+                    ),
+                    sep_factory(),
                     CustomNetwork(
                         font=font_info["info"],
                         fontsize=scaled_fontsize,
@@ -397,11 +397,6 @@ def setup_hooks():
         transient = window.window.get_wm_transient_for()
         if dialog or transient:
             window.floating = True
-
-    @hook.subscribe.client_focus
-    def no_focus_mediawindow(window):
-        if window == MediaContainer.window:
-            focus_last_non_floating_window(qtile)
 
 
 # -------------------------------------------------------------------

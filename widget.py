@@ -62,7 +62,7 @@ class CustomNetwork(InLoopPollText):
     ]
 
     def __init__(self, **config):
-        InLoopPollText.__init__(self, **config)
+        super().__init__(**config)
         self.add_defaults(CustomNetwork.defaults)
 
     @classmethod
@@ -117,3 +117,21 @@ class CustomNetwork(InLoopPollText):
 
         except Exception:
             logger.exception("CustomNetwork is broke!")
+
+
+# --------------------------------------------------------------------
+class FastGenPollText(InLoopPollText):
+    """A generic text widget that polls using poll function to get the text"""
+
+    defaults = [
+        ("func", None, "Poll Function"),
+    ]
+
+    def __init__(self, **config):
+        super().__init__(**config)
+        self.add_defaults(InLoopPollText.defaults)
+
+    def poll(self):
+        if not self.func:
+            return "You need a poll function"
+        return self.func()
