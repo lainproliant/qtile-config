@@ -19,6 +19,7 @@ MessageCallback = Callable[["Message"], str]
 # --------------------------------------------------------------------
 @dataclass
 class Message:
+    subject: str
     callback: MessageCallback
     display_sec: float
     update_sec: float
@@ -49,8 +50,8 @@ class Message:
 # --------------------------------------------------------------------
 class IdleMessage(Message):
     def __init__(self):
-        super().__init__(self._print, 0, 0.01)
-        self.animation = '/-\\|'
+        super().__init__("idle", self._print, 0, 0.01)
+        self.animation = "/-\\|"
         self.offset = 0
 
     def _print(self, msg: Message):
@@ -67,32 +68,46 @@ class Status:
     idle = IdleMessage()
     update_sec = 0.05
 
-    messages: list[Message] = []
+    subjects: list[str] = []
+    messages: dict[str, Message] = {}
     offset = -1
     rotate_sec: float = 1.0
     offset_ttl: datetime = datetime.min
 
     @classmethod
     def update_messages(cls, now: datetime):
-        cls.messages = [m for m in cls.messages if m.update(now)]
-        if cls.offset >= len(cls.messages):
-            cls.offset = len(cls.messages) - 1
+        dead_keys = [k for k, m in cls.messages.items() if not m.update(now)]
+        for key in dead_keys:
+            del cls.messages[key]
+        cls.subjects = [subj for subj in cls.subjects if subj in cls.messages]
+
+        if cls.offset >= len(cls.subjects):
+            cls.offset = len(cls.subjects) - 1
 
     @classmethod
-    def show(cls, message_f: str | MessageCallback, display_sec=1.0, update_sec=0):
+    def show(
+        cls,
+        subject: str,
+        message_f: str | MessageCallback,
+        display_sec=1.0,
+        update_sec=0,
+    ):
         callback = message_f if callable(message_f) else (lambda m: str(message_f))
-        cls.messages.append(Message(callback, display_sec, update_sec))
+        new_subject = subject not in cls.messages
+        cls.messages[subject] = Message(subject, callback, display_sec, update_sec)
+        if new_subject:
+            cls.subjects.append(subject)
 
     @classmethod
     def update(cls) -> str:
         now = datetime.now()
         cls.update_messages(now)
 
-        if cls.messages:
+        if cls.subjects:
             if cls.offset_ttl < now or cls.offset < 0:
-                cls.offset = (cls.offset + 1) % len(cls.messages)
+                cls.offset = (cls.offset + 1) % len(cls.subjects)
                 cls.offset_ttl = now + secs(cls.rotate_sec)
-            message = cls.messages[cls.offset * -1]
+            message = cls.messages[cls.subjects[cls.offset * -1]]
 
         else:
             message = Status.idle

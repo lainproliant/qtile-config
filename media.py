@@ -11,8 +11,8 @@ from libqtile import hook, qtile
 from libqtile.backend.base import Window
 from libqtile.core.manager import Qtile
 
+from constants import Subjects
 from maths import clamp
-
 from status import Status
 
 
@@ -133,7 +133,7 @@ class MediaContainer:
         cls.window.cmd_bring_to_front()
 
         if print_status:
-            Status.show(f"{media_width}x{media_height}")
+            Status.show(Subjects.WINDOW_SIZE, f"{media_width}x{media_height}")
 
     @classmethod
     def focus_last_non_floating_window(cls, qtile: Qtile):

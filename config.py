@@ -24,7 +24,7 @@ from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 
 from base16 import Base16
-from constants import FONT_SCALING_RATIO
+from constants import FONT_SCALING_RATIO, Subjects
 from framework import config, config_set, inject, provide, setup
 from media import MediaContainer
 from status import Status
@@ -290,8 +290,6 @@ def screens(
                 [
                     group_box_factory(),
                     sep_factory(),
-                    widget.CurrentLayout(font=font_info["info"]),
-                    sep_factory(),
                     widget.WindowName(
                         width=bar.STRETCH,
                         empty_group_string="(empty)",
@@ -397,6 +395,10 @@ def setup_hooks():
         transient = window.window.get_wm_transient_for()
         if dialog or transient:
             window.floating = True
+
+    @hook.subscribe.layout_change
+    def on_layout_change(layout, group):
+        Status.show(Subjects.LAYOUT, str(layout.name))
 
 
 # -------------------------------------------------------------------
