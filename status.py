@@ -5,6 +5,7 @@
 # Date: Thursday July 27, 2023
 # --------------------------------------------------------------------
 
+import threading
 from datetime import datetime
 from dataclasses import dataclass
 from typing import Callable
@@ -50,17 +51,13 @@ class Message:
 # --------------------------------------------------------------------
 class IdleMessage(Message):
     def __init__(self):
-        super().__init__("idle", self._print, 0, 0.01)
+        super().__init__("idle", self._print, 0, 0.05)
         self.animation = "/-\\|"
         self.offset = 0
 
     def _print(self, msg: Message):
-        return self.animation[self.offset]
-
-    def update(self, now: datetime):
-        super().update(now)
         self.offset = (self.offset + 1) % len(self.animation)
-        return True
+        return self.animation[self.offset]
 
 
 # --------------------------------------------------------------------
@@ -73,6 +70,7 @@ class Status:
     offset = -1
     rotate_sec: float = 1.0
     offset_ttl: datetime = datetime.min
+    lock = threading.Lock()
 
     @classmethod
     def update_messages(cls, now: datetime):

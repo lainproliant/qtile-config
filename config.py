@@ -327,7 +327,7 @@ def screens(
                     ),
                     widget.Clock(format="%H:%M:%S"),
                 ],
-                size=36,
+                size=48,
                 **widget_defaults,
             ),
         )
