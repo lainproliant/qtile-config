@@ -33,29 +33,36 @@ class MediaContainer:
     window: Optional[Window] = None
 
     @classmethod
-    def make_media(cls, qtile: Qtile):
+    def toggle_media(cls, qtile: Qtile):
         """
-        Make the current window the "media" window.
+        Make the current window the "media" window, or forget the media window.
         """
         assert qtile.current_window is not None
 
         if cls.window is not None:
-            window = cls.window
             cls.forget_media()
-            window.focus(True)
 
         else:
-            cls.window = qtile.current_window
-            cls.focus_last_non_floating_window(qtile)
-            cls.position_media_window(qtile, True)
+            cls.set_media(qtile, qtile.current_window)
 
     @classmethod
-    def forget_media(cls, unfloat=True):
+    def set_media(cls, qtile: Qtile, window):
+        cls.forget_media(focus=False)
+        cls.window = window
+        cls.position_media_window(qtile, True)
+
+    @classmethod
+    def forget_media(cls, unfloat=True, focus=True):
         """
         Forget about the media window, and unfloat it.
         """
-        if unfloat and cls.window is not None:
-            cls.window.floating = False
+        if cls.window is not None:
+            cls.focus_last_non_floating_window(qtile)
+            if unfloat:
+                cls.window.floating = False
+            if focus:
+                cls.window.focus(True)
+
         cls.window = None
         # Reset for the next media window.
         cls.visible = True

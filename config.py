@@ -19,7 +19,7 @@ import subprocess
 from pathlib import Path
 from typing import Callable, List
 
-from libqtile import bar, hook, layout, widget
+from libqtile import qtile, bar, hook, layout, widget
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 
@@ -102,7 +102,7 @@ def keys(mod, groups) -> List[Key]:
         Key([mod, "shift"], "e", lazy.function(window_to_next_screen)),
         Key([mod, "shift"], "f", lazy.window.toggle_fullscreen()),
         Key([mod, "shift"], "g", lazy.function(ground_all_floats)),
-        Key([mod, "shift"], "v", lazy.function(MediaContainer.make_media)),
+        Key([mod, "shift"], "v", lazy.function(MediaContainer.toggle_media)),
         Key([mod, "shift"], "w", lazy.function(window_to_prev_screen)),
         Key([mod], "n", lazy.function(adjust_opacity(0.01))),
         Key([mod, "shift"], "n", lazy.function(adjust_opacity(-0.01))),
@@ -300,7 +300,7 @@ def screens(
                     FastGenPollText(
                         func=Status.update,
                         update_interval=Status.update_sec,
-                        fontsize=scaled_fontsize
+                        fontsize=scaled_fontsize,
                     ),
                     sep_factory(),
                     CustomNetwork(
@@ -391,10 +391,17 @@ def setup_hooks():
 
     @hook.subscribe.client_new
     def floating_dialogs(window):
+        # Automatically make mpv windows the media window.
+        auto_media_rules = [Match(wm_class="mpv")]
+        if any(window.match(rule) for rule in auto_media_rules):
+            MediaContainer.set_media(qtile, window)
+            qtile.call_later(0, MediaContainer.position_media_window, qtile)
+
         dialog = window.window.get_wm_type() == "dialog"
         transient = window.window.get_wm_transient_for()
         if dialog or transient:
             window.floating = True
+
 
     @hook.subscribe.layout_change
     def on_layout_change(layout, group):
