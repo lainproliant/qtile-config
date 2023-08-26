@@ -146,17 +146,13 @@ class MediaContainer:
 
         offset_x = qtile.current_screen.x + int(max(0, width - res.width - cls.pad_x))
         offset_y = qtile.current_screen.y + int(max(0, cls.pad_y))
-        #        offset_x = qtile.current_screen.x + int(
-        #            max(0, width - media_width - (width * cls.pad_x))
-        #        )
-        #        offset_y = qtile.current_screen.y + int(max(0, height * cls.pad_y))
 
         cls.window.cmd_set_size_floating(res.width, res.height)
         cls.window.cmd_set_position_floating(offset_x, offset_y)
         cls.window.cmd_bring_to_front()
 
         if print_status:
-            Status.show(Subjects.WINDOW_SIZE, f"{res.width}x{res.height}")
+            Status.show(Subjects.WINDOW_SIZE, f"{res.width}x{res.height} {cls.pad_x}x{cls.pad_y}y")
 
     @classmethod
     def focus_last_non_floating_window(cls, qtile: Qtile):

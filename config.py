@@ -403,7 +403,6 @@ def setup_hooks():
         if dialog or transient:
             window.floating = True
 
-
     @hook.subscribe.layout_change
     def on_layout_change(layout, group):
         Status.show(Subjects.LAYOUT, str(layout.name))
