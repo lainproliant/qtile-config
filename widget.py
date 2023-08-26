@@ -105,7 +105,11 @@ class CustomNetwork(InLoopPollText):
             # pylint: disable=I1101
             ifaces = netifaces.interfaces()
             wifi_ifaces = [iface for iface in ifaces if iface.startswith("wl")]
-            eth_ifaces = [iface for iface in ifaces if iface.startswith("en")]
+            eth_ifaces = [
+                iface
+                for iface in ifaces
+                if iface.startswith("en") or iface.startswith("eth")
+            ]
 
             for iface in wifi_ifaces:
                 self.format_wifi(statuses, iface)
