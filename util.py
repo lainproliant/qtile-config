@@ -7,7 +7,10 @@
 # Distributed under terms of the MIT license.
 # --------------------------------------------------------------------
 
+import time
+
 from libqtile.core.manager import Qtile
+
 from media import MediaContainer
 
 

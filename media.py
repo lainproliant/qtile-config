@@ -12,6 +12,7 @@ from libqtile import hook, qtile
 from libqtile.backend.base import Window
 from libqtile.core.manager import Qtile
 
+from timeutil import get_millis
 from constants import Subjects
 from maths import clamp
 from status import Status
@@ -41,6 +42,8 @@ class MediaContainer:
     visible = True
     size = 10
     allow_focus = False
+    adj_inc = 1
+    adj_ms = 0
 
     window: Optional[Window] = None
 
@@ -99,6 +102,16 @@ class MediaContainer:
         cls.position_media_window(qtile)
 
     @classmethod
+    def _adj_ratio(cls, adj) -> int:
+        now_ms = get_millis()
+        if now_ms - cls.adj_ms < 50:
+            cls.adj_inc += 1
+        else:
+            cls.adj_inc = 1
+        cls.adj_ms = now_ms
+        return cls.adj_inc * adj
+
+    @classmethod
     def adjust_size(cls, adj: int):
         def _adjust_size(qtile: Qtile):
             cls.size = clamp(0, len(cls.get_resolutions()), cls.size + adj)
@@ -109,7 +122,7 @@ class MediaContainer:
     @classmethod
     def adjust_pad_x(cls, adj: int):
         def _adjust_pad_x(qtile: Qtile):
-            cls.pad_x = max(0, cls.pad_x + adj)
+            cls.pad_x = max(0, cls.pad_x + cls._adj_ratio(adj))
             cls.position_media_window(qtile, True)
 
         return _adjust_pad_x
@@ -117,7 +130,7 @@ class MediaContainer:
     @classmethod
     def adjust_pad_y(cls, adj: int):
         def _adjust_pad_y(qtile: Qtile):
-            cls.pad_y = max(0, cls.pad_y + adj)
+            cls.pad_y = max(0, cls.pad_y + cls._adj_ratio(adj))
             cls.position_media_window(qtile, True)
 
         return _adjust_pad_y
@@ -126,14 +139,15 @@ class MediaContainer:
     def adjust_opacity(cls, delta: float):
         def _adjust_opacity(qtile: Qtile):
             assert cls.window is not None
-            cls.window.opacity = clamp(0.1, 1.0, cls.window.opacity + delta)
+            cls.window.opacity = clamp(
+                0.1, 1.0, cls.window.opacity + cls._adj_ratio(delta)
+            )
 
         return _adjust_opacity
 
     @classmethod
     def position_media_window(cls, qtile: Qtile, print_status=False):
         assert cls.window is not None
-        info = qtile.current_screen.cmd_info()
 
         if not cls.visible:
             cls.window.minimized = True
@@ -141,18 +155,29 @@ class MediaContainer:
 
         cls.window.minimized = False
 
-        width = info["width"]
         res = cls.get_resolutions()[cls.size]
-
-        offset_x = qtile.current_screen.x + int(max(0, width - res.width - cls.pad_x))
-        offset_y = qtile.current_screen.y + int(max(0, cls.pad_y))
+        cls.pad_x = clamp(
+            0,
+            qtile.current_screen.width - res.width,
+            cls.pad_x,
+        )
+        cls.pad_y = clamp(
+            0,
+            qtile.current_screen.height - res.height,
+            cls.pad_y
+        )
+        offset_x = qtile.current_screen.x + qtile.current_screen.width - res.width - cls.pad_x
+        offset_y = qtile.current_screen.y + cls.pad_y
 
         cls.window.cmd_set_size_floating(res.width, res.height)
         cls.window.cmd_set_position_floating(offset_x, offset_y)
         cls.window.cmd_bring_to_front()
 
         if print_status:
-            Status.show(Subjects.WINDOW_SIZE, f"{res.width}x{res.height} {cls.pad_x}x{cls.pad_y}y")
+            Status.show(
+                Subjects.WINDOW_SIZE,
+                f"{res.width}x{res.height} {cls.pad_x}x{cls.pad_y}y",
+            )
 
     @classmethod
     def focus_last_non_floating_window(cls, qtile: Qtile):
