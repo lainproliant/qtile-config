@@ -44,6 +44,7 @@ class MediaContainer:
     allow_focus = False
     adj_inc = 1
     adj_ms = 0
+    bar_height = 0
 
     window: Optional[Window] = None
 
@@ -162,7 +163,7 @@ class MediaContainer:
             cls.pad_x,
         )
         cls.pad_y = clamp(
-            0,
+            cls.bar_height,
             qtile.current_screen.height - res.height,
             cls.pad_y
         )

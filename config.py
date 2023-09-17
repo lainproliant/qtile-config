@@ -105,8 +105,8 @@ def keys(mod, groups) -> List[Key]:
         Key([mod, "shift", "control"], "v", lazy.function(MediaContainer.focus_media)),
         Key([mod, "shift"], "v", lazy.function(MediaContainer.toggle_media)),
         Key([mod, "shift"], "w", lazy.function(window_to_prev_screen)),
-        Key([mod], "n", lazy.function(adjust_opacity(0.01))),
-        Key([mod, "shift"], "n", lazy.function(adjust_opacity(-0.01))),
+        Key([mod], "b", lazy.function(adjust_opacity(0.01))),
+        Key([mod, "shift"], "b", lazy.function(adjust_opacity(-0.01))),
         # --> Media window controls
         Key([mod], "v", lazy.function(MediaContainer.media_front_toggle)),
         Key([mod], "slash", lazy.function(MediaContainer.adjust_size(1))),
@@ -145,6 +145,12 @@ def keys(mod, groups) -> List[Key]:
         Key([mod], "o", lazy.spawn(util("prev_bg"))),
         Key([mod, "shift"], "p", lazy.spawn(util("random_bg"))),
         Key([mod, "control"], "space", lazy.spawn(util("toggle_touchpad"))),
+        Key([mod], "n", lazy.spawn(util("mouse1_hint"))),
+        Key([mod], "m", lazy.spawn(util("mouse3_hint"))),
+        Key([mod, "shift"], "n", lazy.spawn(util("mouse1_grid"))),
+        Key([mod, "shift"], "m", lazy.spawn(util("mouse3_grid"))),
+        Key([mod, "control"], "n", lazy.spawn(util("mouse1_normal"))),
+        Key([mod, "control"], "m", lazy.spawn(util("mouse3_normal"))),
         # --> Qtile process commands.
         Key([mod], "q", lazy.restart()),
         Key([mod, "shift"], "q", lazy.shutdown()),
@@ -284,7 +290,10 @@ def screens(
     sep_factory,
     font_info,
 ):
-    scaled_fontsize = font_info["size"] * FONT_SCALING_RATIO
+    scaled_fontsize = int(font_info["size"] * FONT_SCALING_RATIO)
+    bar_height = scaled_fontsize + 16
+    MediaContainer.bar_height = bar_height
+
     return [
         Screen(
             top=bar.Bar(
@@ -328,7 +337,7 @@ def screens(
                     ),
                     widget.Clock(format="%H:%M:%S"),
                 ],
-                size=48,
+                size=bar_height,
                 **widget_defaults,
             ),
         )
