@@ -94,8 +94,8 @@ def keys(mod, groups) -> List[Key]:
         Key([mod, "shift"], "l", lazy.layout.shuffle_right()),
         Key([mod], "h", lazy.layout.left()),
         Key([mod], "l", lazy.layout.right()),
-        Key([mod], "w", lazy.prev_screen()),
-        Key([mod], "e", lazy.next_screen()),
+        Key([mod], "e", lazy.prev_screen()),
+        Key([mod], "w", lazy.next_screen()),
         # --> Window state commands.
         Key([mod], "f", lazy.window.toggle_floating()),
         Key([mod, "shift"], "c", lazy.window.kill()),
