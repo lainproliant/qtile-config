@@ -19,8 +19,9 @@ import subprocess
 from pathlib import Path
 from typing import Callable, List
 
-from libqtile import qtile, bar, hook, layout, widget
+from libqtile import bar, hook, layout, qtile, widget
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
+from libqtile.core.manager import Qtile
 from libqtile.lazy import lazy
 
 from base16 import Base16
@@ -415,6 +416,14 @@ def setup_hooks():
     @hook.subscribe.layout_change
     def on_layout_change(layout, group):
         Status.show(Subjects.LAYOUT, str(layout.name))
+
+    @hook.subscribe.setgroup
+    def on_group_changed():
+        assert isinstance(qtile, Qtile)
+        if qtile.current_group.name == "9":
+            qtile.current_screen.top.show(False)
+        else:
+            qtile.current_screen.top.show(True)
 
 
 # -------------------------------------------------------------------
