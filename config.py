@@ -262,6 +262,7 @@ def num_batteries() -> int:
 # -------------------------------------------------------------------
 @provide
 def battery_widgets(font_info, num_batteries) -> list[widget.Battery]:
+    scaled_fontsize = int(font_info["size"] * FONT_SCALING_RATIO)
     widgets = []
     for battery_id in range(num_batteries):
         prefix = ""
@@ -277,6 +278,9 @@ def battery_widgets(font_info, num_batteries) -> list[widget.Battery]:
                 charge_char="+",
                 discharge_char="-",
                 empty_char="!",
+                show_short_text=False,
+                font=font_info["font"],
+                fontsize=scaled_fontsize
             )
         )
     return widgets
