@@ -145,7 +145,7 @@ def keys(mod, groups) -> List[Key]:
         Key([mod], "p", lazy.spawn(util("next_bg"))),
         Key([mod], "o", lazy.spawn(util("prev_bg"))),
         Key([mod, "shift"], "p", lazy.spawn(util("random_bg"))),
-        Key([mod, "control"], "space", lazy.spawn(util("toggle_touchpad"))),
+        Key([mod, "control"], "space", lazy.spawn(util("mouse_mod"))),
         Key([mod], "n", lazy.spawn(util("mouse1_hint"))),
         Key([mod], "m", lazy.spawn(util("mouse3_hint"))),
         Key([mod, "shift"], "n", lazy.spawn(util("mouse1_grid"))),
@@ -251,13 +251,35 @@ def sep_factory(base16: Base16) -> Callable[[], widget.Sep]:
 
 # -------------------------------------------------------------------
 @provide
-def battery_widget(font_info) -> widget.Battery:
-    return widget.Battery(
-        format="{char}{percent:2.0%}",
-        charge_char="+",
-        discharge_char="-",
-        empty_char="XX",
+def num_batteries() -> int:
+    return int(
+        subprocess.check_output("upower -e | grep BAT | wc -l", shell=True).decode(
+            "utf-8"
+        )
     )
+
+
+# -------------------------------------------------------------------
+@provide
+def battery_widgets(font_info, num_batteries) -> list[widget.Battery]:
+    widgets = []
+    for battery_id in range(num_batteries):
+        prefix = ""
+        suffix = ""
+        if num_batteries > 1:
+            prefix = f"{chr(ord('A') + battery_id)}"
+        if battery_id < num_batteries - 1:
+            suffix = " "
+        widgets.append(
+            widget.Battery(
+                battery=battery_id,
+                format=prefix + "{char}{percent:2.0%}" + suffix,
+                charge_char="+",
+                discharge_char="-",
+                empty_char="!",
+            )
+        )
+    return widgets
 
 
 # -------------------------------------------------------------------
@@ -286,7 +308,7 @@ def screens(
     base16: Base16,
     num_screens,
     widget_defaults,
-    battery_widget,
+    battery_widgets,
     group_box_factory,
     sep_factory,
     font_info,
@@ -326,7 +348,7 @@ def screens(
                         fontsize=scaled_fontsize,
                         foreground=base16(0x03),
                     ),
-                    battery_widget,
+                    *battery_widgets,
                     sep_factory(),
                     widget.Clock(
                         format="%a ", fontsize=scaled_fontsize, foreground=base16(0x03)
